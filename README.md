@@ -56,8 +56,6 @@ g++ -O2 -fopenmp -o cort tools/correlation_kstress.cpp -lm
 - Pair forces only: no many-body potentials, no bond, angle, dihedral, improper or kspace contributions.
 - The pair style must call the LAMMPS tally interface; GPU, KOKKOS and INTEL accelerated styles do not.
 - Each MPI rank must contain interacting pairs at every sampled step (always the case for dense liquids and glasses); a rank without pairs would keep the values of the previous sample.
-- Velocities are used as they are; no centre-of-mass motion or bias is removed.
-- The correlator lag time assumes a timestep of 0.005 (constant `DT` in `correlation_kstress.cpp`).
 
 ## Checking a new system
 
