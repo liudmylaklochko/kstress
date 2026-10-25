@@ -55,6 +55,7 @@ ComputeKStressTallyV3::ComputeKStressTallyV3(LAMMPS *lmp, int narg, char **arg) 
   comm_reverse = size_peratom_cols = 6;
   peflag = 1;                    // we need Pair::ev_tally() to be run
 
+  last_reduced = -1;
   did_compute = 0;
   invoked_peratom = invoked_scalar = -1;
   nmax = -1;
@@ -145,6 +146,7 @@ void ComputeKStressTallyV3::init()
 
   did_compute = -1;
   current_i = -1;
+  last_reduced = -1;
 }
 
 /* ----------------------------------------------------------------------
@@ -193,9 +195,9 @@ void ComputeKStressTallyV3::pair_tally_callback(int i, int j, int nlocal, int ne
     for (int k = 0; k < nq; ++k)
       for (int l = 0; l < 6; ++l) {
         sgm[k][l] = 0.0;
-        array[k][l] = 0.0;
         sgmtmp[k][l] = 0.0;
       }
+    last_reduced = -1;            // new pair data: the next compute_array() must reduce
   }
 
   // a new atom has started -> the previous one is complete
@@ -268,10 +270,21 @@ void ComputeKStressTallyV3::compute_array()
     current_i = -1;
   }
 
-  MPI_Allreduce(&sgm[0][0], &array[0][0], nq * 6, MPI_DOUBLE, MPI_SUM, world);
+  // a second call on the same timestep, with no new pair data in between,
+  // returns the stored result: the local buffers were cleared after the first
+  // reduction and must not be summed again
+  if (last_reduced == update->ntimestep) return;
 
+  MPI_Allreduce(&sgm[0][0], &array[0][0], nq * 6, MPI_DOUBLE, MPI_SUM, world);
+  last_reduced = update->ntimestep;
+
+  // clear the local buffers, so that nothing from this sample can be added
+  // to a later one (repeated calls, consecutive runs, ranks without pairs)
   for (int k = 0; k < nq; k++)
-    for (int l = 0; l < 6; l++) sgm[k][l] = array[k][l];
+    for (int l = 0; l < 6; l++) {
+      sgm[k][l] = 0.0;
+      sgmtmp[k][l] = 0.0;
+    }
 }
 
 /* ---------------------------------------------------------------------- */
