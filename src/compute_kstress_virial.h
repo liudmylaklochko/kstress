@@ -1,4 +1,4 @@
-/* -*- c++ -*- ----------------------------------------------------------
+/*----------------------------------------------------------
    compute kstress_vir
 
    Virial (pair) part of the wavevector-dependent stress tensor sigma(q)
