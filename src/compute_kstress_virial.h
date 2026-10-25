@@ -61,6 +61,7 @@ class ComputeKStressTallyV3 : public Compute {
 
   int callBackPeriod;
   int did_compute;
+  bigint last_reduced;                // timestep of the last reduction into array
   int current_i;                      // atom currently being accumulated
   int nmax;
   double inv_volume;
@@ -73,4 +74,3 @@ class ComputeKStressTallyV3 : public Compute {
 
 #endif
 #endif
-
